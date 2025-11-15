@@ -333,16 +333,41 @@ void search_root(GameState *pos, SearchInfo *root_info)
     root_info->stopped = false;
     memset(root_info->move_stack, 0, sizeof(root_info->move_stack));
 
+    
     for (int iterative_depth = 1; iterative_depth <= max_search_depth; iterative_depth++) {
         memset(root_info->pv_table, 0, sizeof(root_info->pv_table));
         memset(root_info->pv_table_length, 0, sizeof(root_info->pv_table_length));
         root_info->depth = iterative_depth;
 
-        int new_score = search(alpha, beta, iterative_depth, pos, root_info);
-
-        // If time is up, and we have completed at least depth 1 search, break out of loop
-        if (!root_info->pv_table_length[0] || (root_info->stopped == 1 && iterative_depth > 1))
+        // Check time
+        if (root_info->stopped == 1) {
             break;
+        }
+
+        if (iterative_depth >= 4) {
+            int aspiration_window = 50;
+            alpha = MAX(score - aspiration_window, -INF);
+            beta = MIN(score + aspiration_window, INF);
+        }
+
+        int new_score = 0;
+
+        while (true) {
+            // Check time
+            if (root_info->stopped == 1) {
+                break;
+            }
+            new_score = search(alpha, beta, iterative_depth, pos, root_info);
+
+            if (new_score <= alpha || new_score >= beta) {                
+                alpha = -INF;
+                beta = INF;
+            }
+            else {
+                break;
+            }
+        }
+        
 
         score = new_score;
         best_move = root_info->pv_table[0][0];
