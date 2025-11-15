@@ -344,6 +344,17 @@ void search_root(GameState *pos, SearchInfo *root_info)
         if (!root_info->pv_table_length[0] || (root_info->stopped == 1 && iterative_depth > 1))
             break;
 
+        // Basic Aspiration Windows
+        if (new_score <= alpha || new_score >= beta) {
+            alpha = -INF;
+            beta = INF;
+            iterative_depth--;
+            continue;
+        }
+
+        alpha = new_score - 50;
+        beta = new_score + 50;
+
         score = new_score;
         best_move = root_info->pv_table[0][0];
 
